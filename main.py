@@ -69,6 +69,22 @@ if __name__ == '__main__':
             ['print', -10],
             ['assign', 'a', -12],
             ['print', 'a'],
+            ['add', 5, 10],
+            ['print', '_'],
+            ['add', 'x', 10],
+            ['print', '_'],
+            ['add', -5, 'x'],
+            ['print', '_'],
+            ['add', 'y', 'x'],
+            ['print', '_'],
+            ['sub', 5, 10],
+            ['print', '_'],
+            ['sub', 'x', 10],
+            ['print', '_'],
+            ['sub', -5, 'x'],
+            ['print', '_'],
+            ['sub', 'y', 'x'],
+            ['print', '_'],
         ]
     )
     with open('out.asm', 'w+') as f:

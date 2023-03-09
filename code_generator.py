@@ -14,6 +14,44 @@ def generate(calls):
             else:
                 scope[var] = scope[val]
             scope['_'] = scope[var]
+        # ['add', int literal | str variable ref, int literal | str variable ref]
+        elif c[0] == 'add':
+            arg1, arg2 = c[1], c[2]
+
+            code.append(f"; -- add {arg1} {arg2} --")
+            if type(arg1) is int:
+                code.append(f"mov rax, {arg1}")
+            else:
+                code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
+
+            if type(arg2) is int:
+                code.append(f"mov rbx, {arg2}")
+            else:
+                code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
+            
+            code.append("add rax, rbx")
+            code.append("push rax")
+            scope['_'] = stack
+            stack += 1
+        # ['sub', int literal | str variable ref, int literal | str variable ref]
+        elif c[0] == 'sub':
+            arg1, arg2 = c[1], c[2]
+
+            code.append(f"; -- add {arg1} {arg2} --")
+            if type(arg1) is int:
+                code.append(f"mov rax, {arg1}")
+            else:
+                code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
+
+            if type(arg2) is int:
+                code.append(f"mov rbx, {arg2}")
+            else:
+                code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
+
+            code.append("sub rax, rbx")
+            code.append("push rax")
+            scope['_'] = stack
+            stack += 1
         # ['print', int literal | str variable ref]
         elif c[0] == 'print':
             code.append(f"; -- print {c[1]} to console --")
