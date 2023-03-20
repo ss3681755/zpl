@@ -1,7 +1,8 @@
 ASM = lambda code: f"""
-segment .text
+section .text
 global _start
 
+; -- print to stdout -- 
 print:
 sub     rsp, 40
 mov     eax, edi
@@ -47,8 +48,10 @@ syscall
 add     rsp, 40
 ret
 
+; -- entrypoint --
 _start:
 {code}
+; -- call exit(0) --
 mov rax, 60
 mov rdi, 0
 syscall
