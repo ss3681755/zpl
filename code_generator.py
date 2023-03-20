@@ -56,7 +56,7 @@ def generate(calls):
         elif c[0] == 'and':
             arg1, arg2 = c[1], c[2]
 
-            code.append(f"; -- and {arg1} {arg2} --")
+            code.append(f"; -- or {arg1} {arg2} --")
             if type(arg1) is int:
                 code.append(f"mov rax, {arg1}")
             else:
@@ -87,6 +87,25 @@ def generate(calls):
                 code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
 
             code.append("or rax, rbx")
+            code.append("push rax")
+            scope['_'] = stack
+            stack += 1
+        # ['xor', int literal | str variable ref, int literal | str variable ref]
+        elif c[0] == 'xor':
+            arg1, arg2 = c[1], c[2]
+
+            code.append(f"; -- xor {arg1} {arg2} --")
+            if type(arg1) is int:
+                code.append(f"mov rax, {arg1}")
+            else:
+                code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
+
+            if type(arg2) is int:
+                code.append(f"mov rbx, {arg2}")
+            else:
+                code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
+
+            code.append("xor rax, rbx")
             code.append("push rax")
             scope['_'] = stack
             stack += 1

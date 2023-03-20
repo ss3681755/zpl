@@ -93,6 +93,10 @@ if __name__ == '__main__':
             ['print', '_'],
             ['or', 'x', 'y'],
             ['print', '_'],
+            ['xor', 10, 2],
+            ['print', '_'],
+            ['xor', 'x', 'y'],
+            ['print', '_'],
         ]
     )
     with open('out.asm', 'w+') as f:
