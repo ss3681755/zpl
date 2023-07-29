@@ -1,11 +1,16 @@
+.SILENT:
+.PHONY: sample
+sample: gen run
+	make clean
+
 gen:
 	python3 main.py
 
-build:
-	nasm -felf64 out.asm && nasm -felf64 runtime.asm && ld out.o runtime.o -o out
+run: out.asm runtime.asm
+	nasm -felf64 out.asm && nasm -felf64 runtime.asm && ld out.o runtime.o -o out && ./out
 
-run: gen build
-	./out
+test: run
+	make clean
 
 clean:
 	rm runtime.o out out.asm out.o
