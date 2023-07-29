@@ -9,8 +9,9 @@ gen:
 run: out.asm runtime.asm
 	nasm -felf64 out.asm && nasm -felf64 runtime.asm && ld out.o runtime.o -o out && ./out
 
-test: run
+test:
+	python3 tester.py
 	make clean
 
 clean:
-	rm runtime.o out out.asm out.o
+	rm runtime.o out out.asm out.o test.out
