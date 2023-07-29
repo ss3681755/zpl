@@ -1,0 +1,21 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "root" ]
+  pull_request:
+    branches: [ "root" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install nasm
+      run: apt update && apt install -y nasm 
+
+    - name: Run tests
+      run: make test
