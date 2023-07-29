@@ -1,1 +1,0 @@
-python3 main.py && nasm -felf64 out.asm && nasm -felf64 runtime.asm && ld out.o runtime.o -o out && ./out
