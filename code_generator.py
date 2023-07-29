@@ -116,7 +116,7 @@ def generate(calls):
                 code.append(f"mov rdi, {c[1]}")
             else:
                 code.append(f"mov rdi, [rsp+{8*(stack - scope[c[1]] - 1)}]")
-            code.append(f"call print")
+            code.append(f"call _print")
             # system calls do not have any output
             if '_' in scope : del scope['_']
         elif c[0] == 'exit':
@@ -125,7 +125,7 @@ def generate(calls):
                 code.append(f"mov rdi, {c[1]}")
             else:
                 code.append(f"mov rdi, [rsp+{8*(stack - scope[c[1]] - 1)}]")
-            code.append(f"call exit")
+            code.append(f"call _exit")
             # system calls do not have any output
             if '_' in scope : del scope['_']
         else:
