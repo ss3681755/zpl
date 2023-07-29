@@ -1,3 +1,10 @@
+def isint(x):
+    try:
+        int(x)
+    except:
+        return False
+    return True
+
 def generate(calls):
     code = [
         'section .text',
@@ -13,7 +20,7 @@ def generate(calls):
         # ['assign', str variable name, int literal | str variable ref]
         if c[0] == 'assign':
             var, val = c[1], c[2]
-            if type(val) is int:
+            if isint(val):
                 code.append(f"; -- {var} = {val} --")
                 code.append(f"push {val}")
                 scope[var] = stack
@@ -26,12 +33,12 @@ def generate(calls):
             arg1, arg2 = c[1], c[2]
 
             code.append(f"; -- add {arg1} {arg2} --")
-            if type(arg1) is int:
+            if isint(arg1):
                 code.append(f"mov rax, {arg1}")
             else:
                 code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
 
-            if type(arg2) is int:
+            if isint(arg2):
                 code.append(f"mov rbx, {arg2}")
             else:
                 code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
@@ -45,12 +52,12 @@ def generate(calls):
             arg1, arg2 = c[1], c[2]
 
             code.append(f"; -- add {arg1} {arg2} --")
-            if type(arg1) is int:
+            if isint(arg1):
                 code.append(f"mov rax, {arg1}")
             else:
                 code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
 
-            if type(arg2) is int:
+            if isint(arg2):
                 code.append(f"mov rbx, {arg2}")
             else:
                 code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
@@ -64,12 +71,12 @@ def generate(calls):
             arg1, arg2 = c[1], c[2]
 
             code.append(f"; -- or {arg1} {arg2} --")
-            if type(arg1) is int:
+            if isint(arg1):
                 code.append(f"mov rax, {arg1}")
             else:
                 code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
 
-            if type(arg2) is int:
+            if isint(arg2):
                 code.append(f"mov rbx, {arg2}")
             else:
                 code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
@@ -83,12 +90,12 @@ def generate(calls):
             arg1, arg2 = c[1], c[2]
 
             code.append(f"; -- or {arg1} {arg2} --")
-            if type(arg1) is int:
+            if isint(arg1):
                 code.append(f"mov rax, {arg1}")
             else:
                 code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
 
-            if type(arg2) is int:
+            if isint(arg2):
                 code.append(f"mov rbx, {arg2}")
             else:
                 code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
@@ -102,12 +109,12 @@ def generate(calls):
             arg1, arg2 = c[1], c[2]
 
             code.append(f"; -- xor {arg1} {arg2} --")
-            if type(arg1) is int:
+            if isint(arg1):
                 code.append(f"mov rax, {arg1}")
             else:
                 code.append(f"mov rax, [rsp+{8*(stack - scope[arg1] - 1)}]")
 
-            if type(arg2) is int:
+            if isint(arg2):
                 code.append(f"mov rbx, {arg2}")
             else:
                 code.append(f"mov rbx, [rsp+{8*(stack - scope[arg2] - 1)}]")
@@ -119,7 +126,7 @@ def generate(calls):
         # ['print', int literal | str variable ref]
         elif c[0] == 'print':
             code.append(f"; -- print {c[1]} to console --")
-            if type(c[1]) is int:
+            if isint(c[1]):
                 code.append(f"mov rdi, {c[1]}")
             else:
                 code.append(f"mov rdi, [rsp+{8*(stack - scope[c[1]] - 1)}]")
@@ -128,7 +135,7 @@ def generate(calls):
             if '_' in scope : del scope['_']
         elif c[0] == 'exit':
             code.append(f"; -- exit with code {c[1]} --")
-            if type(c[1]) is int:
+            if isint(c[1]):
                 code.append(f"mov rdi, {c[1]}")
             else:
                 code.append(f"mov rdi, [rsp+{8*(stack - scope[c[1]] - 1)}]")
