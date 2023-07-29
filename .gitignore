@@ -1,4 +1,4 @@
 out*
 __pycache__/
 *.o
-*.out
+test.out
