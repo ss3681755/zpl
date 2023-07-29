@@ -1,5 +1,12 @@
 def generate(calls):
-    code = []
+    code = [
+        'section .text',
+        'global _start',
+        'extern _print',
+        'extern _exit',
+        '; -- entrypoint --',
+        '_start:',
+    ]
     scope = {}
     stack = 0
     for c in calls:

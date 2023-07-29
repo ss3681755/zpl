@@ -1,14 +1,3 @@
-ASM = lambda code: f"""
-section .text
-global _start
-extern _print
-extern _exit
-
-; -- entrypoint --
-_start:
-{code}
-"""
-
 from code_generator import generate
 
 if __name__ == '__main__':
@@ -56,4 +45,4 @@ if __name__ == '__main__':
         ]
     )
     with open('out.asm', 'w+') as f:
-        f.write(ASM(code))
+        f.write(code)
