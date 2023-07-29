@@ -15,3 +15,7 @@ test:
 
 clean:
 	rm runtime.o out out.asm out.o test.out
+
+setup:
+	sudo apt update
+	sudo apt install -y nasm
