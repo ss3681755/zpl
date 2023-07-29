@@ -117,6 +117,16 @@ def generate(calls):
             else:
                 code.append(f"mov rdi, [rsp+{8*(stack - scope[c[1]] - 1)}]")
             code.append(f"call print")
+            # system calls do not have any output
+            if '_' in scope : del scope['_']
+        elif c[0] == 'exit':
+            code.append(f"; -- exit with code {c[1]} --")
+            if type(c[1]) is int:
+                code.append(f"mov rdi, {c[1]}")
+            else:
+                code.append(f"mov rdi, [rsp+{8*(stack - scope[c[1]] - 1)}]")
+            code.append(f"call exit")
+            # system calls do not have any output
             if '_' in scope : del scope['_']
         else:
             raise Exception(f'Unknow function call {" ".join(map(str, c))}')

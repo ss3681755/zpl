@@ -48,13 +48,14 @@ syscall
 add     rsp, 40
 ret
 
+; -- exit the program --
+exit:
+mov rax, 60
+syscall
+
 ; -- entrypoint --
 _start:
 {code}
-; -- call exit(0) --
-mov rax, 60
-mov rdi, 0
-syscall
 """
 
 from code_generator import generate
@@ -100,6 +101,7 @@ if __name__ == '__main__':
             ['print', '_'],
             ['xor', 'x', 'y'],
             ['print', '_'],
+            ['exit', 0],
         ]
     )
     with open('out.asm', 'w+') as f:
