@@ -14,4 +14,5 @@ for test_file in os.listdir('tests'):
                 f2.write(str(stdout.decode('ascii')))
             success = os.system(f'diff {expected_output_file} test.out') == 0
             if not success:
+                print(f'Test {test_file} failed.')
                 exit(1)
