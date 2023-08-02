@@ -12,7 +12,7 @@ for test_file in os.listdir('tests'):
             stdout, _ = subprocess.Popen(['make', 'run'], stdout=subprocess.PIPE).communicate()
             with open('test.out', 'w+') as f2:
                 f2.write(str(stdout.decode('ascii')))
-            success = os.system(f'diff {expected_output_file} test.out') == 0
+            success = os.system(f'diff {expected_output_file} test.out -u') == 0
             if not success:
                 print(f'Test {test_file} failed.')
                 exit(1)
