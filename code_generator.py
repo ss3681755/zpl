@@ -19,15 +19,17 @@ def generate(calls):
     for c in calls:
         # ['assign', str variable name, int literal | str variable ref]
         if c[0] == 'assign':
-            var, val = c[1], c[2]
-            if isint(val):
-                code.append(f"; -- {var} = {val} --")
-                code.append(f"push {val}")
-                scope[var] = stack
-                stack += 1
+            arg1, arg2 = c[1], c[2]
+            if isint(arg2):
+                code.append(f"; -- {arg1} = {arg2} --")
+                code.append(f"push {arg2}")
             else:
-                scope[var] = scope[val]
-            scope['_'] = scope[var]
+                code.append(f"; -- copy {arg2} --")
+                code.append(f"mov rax, [rsp+{8*(stack - scope[arg2] - 1)}]")
+                code.append(f"push rax")
+
+            scope['_'] = scope[arg1] = stack
+            stack += 1
         # ['add', int literal | str variable ref, int literal | str variable ref]
         elif c[0] == 'add':
             arg1, arg2 = c[1], c[2]
