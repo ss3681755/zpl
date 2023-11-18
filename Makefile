@@ -14,7 +14,7 @@ test:
 	make clean
 
 clean:
-	rm runtime.o out out.asm out.o test.out
+	rm *.o out.asm
 
 setup:
 	sudo apt update
