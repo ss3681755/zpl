@@ -1,5 +1,6 @@
 X86_64_REGISTERS = ['rax', 'rdi', 'rsi', 'rdx', 'r10', 'r8', 'r9']
 ARITY_2_FUNCTIONS = ['add', 'sub', 'and', 'or', 'xor']
+ARITY_1_FUNCTIONS = ['inc', 'dec']
 
 def isint(x):
     try: int(x)
@@ -44,6 +45,10 @@ def generate(calls):
         # [<fn>, <int | variable>, <int | variable>]
         elif c[0] in ARITY_2_FUNCTIONS:
             assert len(c) == 3
+            code.extend(make_function_call(scope, c[0], c[1:]))
+        # [<fn>, <int | variable>]
+        elif c[0] in ARITY_1_FUNCTIONS:
+            assert len(c) == 2
             code.extend(make_function_call(scope, c[0], c[1:]))
         # ['print', int literal | str variable ref]
         elif c[0] == 'print':
