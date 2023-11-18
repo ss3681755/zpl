@@ -1,4 +1,3 @@
-# Calling convention https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md#calling-conventions
 X86_64_REGISTERS = ['rax', 'rdi', 'rsi', 'rdx', 'r10', 'r8', 'r9']
 ARITY_2_FUNCTIONS = ['add', 'sub', 'and', 'or', 'xor']
 
