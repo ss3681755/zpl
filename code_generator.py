@@ -1,9 +1,27 @@
+# Calling convention https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md#calling-conventions
+X86_64_REGISTERS = ['rax', 'rdi', 'rsi', 'rdx', 'r10', 'r8', 'r9']
+ARITY_2_FUNCTIONS = ['add', 'sub', 'and', 'or', 'xor']
+
 def isint(x):
-    try:
-        int(x)
-    except:
-        return False
+    try: int(x)
+    except: return False
     return True
+
+def deref(scope, arg):
+    return arg if isint(arg) else f"QWORD [rsp+{8*(scope['stack'] - scope['args'][arg] - 1)}]"
+
+def make_function_call(scope, fn, args):
+    assert len(args) <= len(X86_64_REGISTERS), f"function only support params upto {len(X86_64_REGISTERS)}."
+
+    code = [f"; -- call {fn} with params {' '.join(args)} --"]
+    for reg, arg in zip(X86_64_REGISTERS, args):
+        code.append(f"mov {reg}, {deref(scope, arg)}")
+
+    code.append(f"{fn} {', '.join(X86_64_REGISTERS[:len(args)])}")
+    code.append("push rax")
+    scope['args']['_'] = scope['stack']
+    scope['stack'] += 1
+    return code
 
 def generate(calls):
     code = [
@@ -19,126 +37,25 @@ def generate(calls):
         # ['assign', str variable name, int literal | str variable ref]
         if c[0] == 'assign':
             arg1, arg2 = c[1], c[2]
-            if isint(arg2):
-                code.append(f"; -- {arg1} = {arg2} --")
-                code.append(f"push {arg2}")
-            else:
-                code.append(f"; -- copy {arg2} --")
-                code.append(f"push QWORD [rsp+{8*(scope['stack'] - scope['args'][arg2] - 1)}]")
+            code.append(f"; -- {arg1} = {arg2} --")
+            code.append(f"push {deref(scope, arg2)}")
 
             scope['args']['_'] = scope['args'][arg1] = scope['stack']
             scope['stack'] += 1
-        # ['add', int literal | str variable ref, int literal | str variable ref]
-        elif c[0] == 'add':
-            arg1, arg2 = c[1], c[2]
-
-            code.append(f"; -- add {arg1} {arg2} --")
-            if isint(arg1):
-                code.append(f"mov rax, {arg1}")
-            else:
-                code.append(f"mov rax, [rsp+{8*(scope['stack'] - scope['args'][arg1] - 1)}]")
-
-            if isint(arg2):
-                code.append(f"mov rbx, {arg2}")
-            else:
-                code.append(f"mov rbx, [rsp+{8*(scope['stack'] - scope['args'][arg2] - 1)}]")
-            
-            code.append("add rax, rbx")
-            code.append("push rax")
-            scope['args']['_'] = scope['stack']
-            scope['stack'] += 1
-        # ['sub', int literal | str variable ref, int literal | str variable ref]
-        elif c[0] == 'sub':
-            arg1, arg2 = c[1], c[2]
-
-            code.append(f"; -- add {arg1} {arg2} --")
-            if isint(arg1):
-                code.append(f"mov rax, {arg1}")
-            else:
-                code.append(f"mov rax, [rsp+{8*(scope['stack'] - scope['args'][arg1] - 1)}]")
-
-            if isint(arg2):
-                code.append(f"mov rbx, {arg2}")
-            else:
-                code.append(f"mov rbx, [rsp+{8*(scope['stack'] - scope['args'][arg2] - 1)}]")
-
-            code.append("sub rax, rbx")
-            code.append("push rax")
-            scope['args']['_'] = scope['stack']
-            scope['stack'] += 1
-        # ['and', int literal | str variable ref, int literal | str variable ref]
-        elif c[0] == 'and':
-            arg1, arg2 = c[1], c[2]
-
-            code.append(f"; -- or {arg1} {arg2} --")
-            if isint(arg1):
-                code.append(f"mov rax, {arg1}")
-            else:
-                code.append(f"mov rax, [rsp+{8*(scope['stack'] - scope['args'][arg1] - 1)}]")
-
-            if isint(arg2):
-                code.append(f"mov rbx, {arg2}")
-            else:
-                code.append(f"mov rbx, [rsp+{8*(scope['stack'] - scope['args'][arg2] - 1)}]")
-            
-            code.append("and rax, rbx")
-            code.append("push rax")
-            scope['args']['_'] = scope['stack']
-            scope['stack'] += 1
-        # ['or', int literal | str variable ref, int literal | str variable ref]
-        elif c[0] == 'or':
-            arg1, arg2 = c[1], c[2]
-
-            code.append(f"; -- or {arg1} {arg2} --")
-            if isint(arg1):
-                code.append(f"mov rax, {arg1}")
-            else:
-                code.append(f"mov rax, [rsp+{8*(scope['stack'] - scope['args'][arg1] - 1)}]")
-
-            if isint(arg2):
-                code.append(f"mov rbx, {arg2}")
-            else:
-                code.append(f"mov rbx, [rsp+{8*(scope['stack'] - scope['args'][arg2] - 1)}]")
-
-            code.append("or rax, rbx")
-            code.append("push rax")
-            scope['args']['_'] = scope['stack']
-            scope['stack'] += 1
-        # ['xor', int literal | str variable ref, int literal | str variable ref]
-        elif c[0] == 'xor':
-            arg1, arg2 = c[1], c[2]
-
-            code.append(f"; -- xor {arg1} {arg2} --")
-            if isint(arg1):
-                code.append(f"mov rax, {arg1}")
-            else:
-                code.append(f"mov rax, [rsp+{8*(scope['stack'] - scope['args'][arg1] - 1)}]")
-
-            if isint(arg2):
-                code.append(f"mov rbx, {arg2}")
-            else:
-                code.append(f"mov rbx, [rsp+{8*(scope['stack'] - scope['args'][arg2] - 1)}]")
-
-            code.append("xor rax, rbx")
-            code.append("push rax")
-            scope['args']['_'] = scope['stack']
-            scope['stack'] += 1
+        # [<fn>, <int | variable>, <int | variable>]
+        elif c[0] in ARITY_2_FUNCTIONS:
+            assert len(c) == 3
+            code.extend(make_function_call(scope, c[0], c[1:]))
         # ['print', int literal | str variable ref]
         elif c[0] == 'print':
             code.append(f"; -- print {c[1]} to console --")
-            if isint(c[1]):
-                code.append(f"mov rdi, {c[1]}")
-            else:
-                code.append(f"mov rdi, [rsp+{8*(scope['stack'] - scope['args'][c[1]] - 1)}]")
+            code.append(f"mov rdi, {deref(scope, c[1])}")
             code.append(f"call _print")
             # system calls do not have any output
             if '_' in scope['args'] : del scope['args']['_']
         elif c[0] == 'exit':
             code.append(f"; -- exit with code {c[1]} --")
-            if isint(c[1]):
-                code.append(f"mov rdi, {c[1]}")
-            else:
-                code.append(f"mov rdi, [rsp+{8*(scope['stack'] - scope['args'][c[1]] - 1)}]")
+            code.append(f"mov rdi, {deref(scope, c[1])}")
             code.append(f"call _exit")
             # system calls do not have any output
             if '_' in scope['args'] : del scope['args']['_']
