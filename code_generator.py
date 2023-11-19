@@ -53,7 +53,7 @@ def generate(calls):
         elif c[0] == 'div':
             assert len(c) == 3
             # find a way to handle divide by 0 error before generating the asm
-            code.append(f"; -- call div with params {' '.join(c[1:])} --")
+            code.append(f"; -- call {c[0]} with params {' '.join(c[1:])} --")
             code.append(f"mov rax, {deref(scope, c[1])}")
             code.append("xor rdx, rdx")
             code.append(f"mov rbx, {deref(scope, c[2])}")
@@ -64,12 +64,21 @@ def generate(calls):
         elif c[0] == 'rem':
             assert len(c) == 3
             # find a way to handle divide by 0 error before generating the asm
-            code.append(f"; -- call div with params {' '.join(c[1:])} --")
+            code.append(f"; -- call {c[0]} with params {' '.join(c[1:])} --")
             code.append(f"mov rax, {deref(scope, c[1])}")
             code.append("xor rdx, rdx")
             code.append(f"mov rbx, {deref(scope, c[2])}")
             code.append(f"div rbx")
             code.append("push rdx")
+            scope['args']['_'] = scope['stack']
+            scope['stack'] += 1
+        elif c[0] == 'mul':
+            assert len(c) == 3
+            code.append(f"; -- call {c[0]} with params {' '.join(c[1:])} --")
+            code.append(f"mov rax, {deref(scope, c[1])}")
+            code.append(f"mov rbx, {deref(scope, c[2])}")
+            code.append(f"mul rbx")
+            code.append("push rax")
             scope['args']['_'] = scope['stack']
             scope['stack'] += 1
         # ['print', int literal | str variable ref]
