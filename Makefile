@@ -1,24 +1,38 @@
 .SILENT:
 .PHONY: %.zpl
 %.zpl:
-	make PROGRAM=$(@) compile
-	$(MAKE) run clean
+	$(MAKE) compile
 
-compile:
-	python main.py $(PROGRAM)
+compile: out
+asm: out.asm
 
-run: out.asm runtime.asm
-	nasm -felf64 out.asm
-	nasm -felf64 runtime.asm
-	ld out.o runtime.o -o out
+run: out
 	./out
 
-test:
+verify:
+	make -B $(PROGRAM)
+	./out > test.out
+	diff -u test.out $(OUTPUT)
+
+test: tester.py
 	python tester.py
 
 clean:
-	rm -f *out* *.o
+	rm -rf *out* *.o
 
 setup:
 	sudo apt update
 	sudo apt install -y nasm
+
+out: out.o runtime.o
+	ld out.o runtime.o -o out
+	chmod +x out
+
+out.o: out.asm
+	nasm -felf64 out.asm
+
+runtime.o: runtime.asm
+	nasm -felf64 runtime.asm
+
+out.asm: main.py
+	python main.py $(PROGRAM)
