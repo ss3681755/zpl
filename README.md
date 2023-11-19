@@ -1,6 +1,7 @@
 # References
-1. [Nasm tutorial](https://cs.lmu.edu/~ray/notes/nasmtutorial/)
-2. [Calling Conventions](https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md#calling-conventions)
+1. [Nasm Docs](https://www.nasm.us/doc/nasmdoci.html)
+2. [Nasm tutorial](https://cs.lmu.edu/~ray/notes/nasmtutorial/)
+3. [Calling Conventions](https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md#calling-conventions)
 
 # Build
 1. Download nasm.
