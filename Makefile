@@ -16,6 +16,7 @@ verify:
 
 test: tester.py
 	python tester.py
+	python tester.py project-euler
 
 clean:
 	rm -rf *out* *.o
