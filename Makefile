@@ -1,7 +1,7 @@
 .SILENT:
 .PHONY: %.zpl
 %.zpl:
-	$(MAKE) compile
+	make compile PROGRAM=$(@)
 
 compile: out
 asm: out.asm
