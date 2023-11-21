@@ -1,23 +1,7 @@
-from copy import deepcopy as clone
-from dataclasses import dataclass, field
-from enum import Flag, auto
+from .token import Token, TokenType
+from .cursor import Cursor
 
-class TokenType(Flag):
-    ALPHA = auto()
-    INTEGER = auto()
-    MINUS = auto()
-    NEWLINE = auto()
-    SPACE = auto()
-    TAB = auto()
-    UNDERSCORE = auto()
-
-@dataclass
-class Token:
-    start: int
-    end: int
-    typ: TokenType
-
-SPECIAL_CHAR_TOKEN_TYPE_MAPPING = {
+_SPECIAL_CHAR_TOKEN_TYPE_MAPPING = {
     ' ': TokenType.SPACE,
     '\n': TokenType.NEWLINE,
     '\t': TokenType.TAB,
@@ -25,74 +9,54 @@ SPECIAL_CHAR_TOKEN_TYPE_MAPPING = {
     '_': TokenType.UNDERSCORE
 }
 
-@dataclass
-class Cursor:
-    text: str
-    index: int = field(default=0)
-    line: int = field(default=1)
-    offset: int = field(default=1)
-
-    def can_advance(self):
-        return self.index < len(self.text)
-
-    def peek(self):
-        assert self.can_advance()
-        return self.text[self.index]
-
-    def advance(self):
-        assert self.can_advance()
-        if self.text[self.index] == '\n':
-            self.line += 1
-            self.offset = 1
-        self.index += 1
-
-    def __eq__(self, other):
-        return self.index == other.index
-
 def _tokenize_alphabet(cursor):
-    if not cursor.can_advance(): return None, cursor
+    token = None
+    with cursor.locked():
+        while cursor.can_advance() and (ord('A') <= ord(cursor.peek()) <= ord('Z') or ord('a') <= ord(cursor.peek()) <= ord('z')):
+            cursor.advance()
 
-    old_cursor = clone(cursor)
-    while cursor.can_advance() and ord('A') <= ord(cursor.peek()) <= ord('z'):
-        cursor.advance()
+        value = cursor.extract()
+        if value is None: raise Exception('Could not extract alphabet.')
+        token = Token(cursor, value, TokenType.ALPHA)
+    return token
 
-    if old_cursor == cursor: return None, old_cursor
-    return Token(old_cursor.index, cursor.index, TokenType.ALPHA), cursor
 
 def _tokenize_digits(cursor):
-    if not cursor.can_advance(): return None, cursor
+    token = None
+    with cursor.locked():
+        while cursor.can_advance() and ord('0') <= ord(cursor.peek()) <= ord('9'):
+            cursor.advance()
 
-    old_cursor = clone(cursor)
-    while cursor.can_advance() and ord('0') <= ord(cursor.peek()) <= ord('9'):
-        cursor.advance()
-
-    if old_cursor == cursor: return None, cursor
-    return Token(old_cursor.index, cursor.index, TokenType.INTEGER), cursor
+        value = cursor.extract()
+        if value is None: raise Exception('Could not extract alphabet.')
+        token = Token(cursor, value, TokenType.INTEGER)
+    return token
 
 def _tokenize_special_char(cursor):
-    if not cursor.can_advance(): return None, cursor
-    token_type = SPECIAL_CHAR_TOKEN_TYPE_MAPPING.get(cursor.peek())
-    if token_type is None: return None, cursor
+    token = None
+    with cursor.locked():
+        cursor.advance()
 
-    start = cursor.index
-    cursor.advance()
-    return Token(start, cursor.index, token_type), cursor
-
+        value = cursor.extract()
+        if value is None: raise Exception('Could not extract alphabet.')
+        token_type = _SPECIAL_CHAR_TOKEN_TYPE_MAPPING.get(value)
+        token = Token(cursor, value, token_type)
+    return token
 
 def tokenize(text):
     cursor = Cursor(text)
     tokens = []
     while cursor.can_advance():
-        old_cursor = clone(cursor)
-        token, cursor = _tokenize_alphabet(cursor)
-        if token is not None: tokens.append(token)
-        token, cursor = _tokenize_digits(cursor)
-        if token is not None: tokens.append(token)
-        token, cursor = _tokenize_special_char(cursor)
-        if token is not None: tokens.append(token)
+        old_token_count = len(tokens)
+        if token := _tokenize_alphabet(cursor):
+            tokens.append(token)
+        if token := _tokenize_digits(cursor):
+            tokens.append(token)
+        if token := _tokenize_special_char(cursor):
+            tokens.append(token)
 
-        # if index has not moved that means we have
-        # encountered an unknown character at index.
-        if old_cursor == cursor:
+        # if no tokens were extracted that mean we
+        # have encountered unsupported characters.
+        if len(tokens) == old_token_count:
             raise Exception(f'Cannot tokenize input due to unsupported character with ascii code {ord(text[index])}')
     return tokens
