@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from copy import deepcopy as clone
+from dataclasses import dataclass, field
 from enum import Flag, auto
 
 class TokenType(Flag):
@@ -16,58 +17,82 @@ class Token:
     end: int
     typ: TokenType
 
-def _tokenize_alphabet(index, text):
-    if index >= len(text): return None, index
+SPECIAL_CHAR_TOKEN_TYPE_MAPPING = {
+    ' ': TokenType.SPACE,
+    '\n': TokenType.NEWLINE,
+    '\t': TokenType.TAB,
+    '-': TokenType.MINUS,
+    '_': TokenType.UNDERSCORE
+}
 
-    start = index
-    while index < len(text) and ord('A') <= ord(text[index]) <= ord('z'):
-        index += 1
+@dataclass
+class Cursor:
+    text: str
+    index: int = field(default=0)
+    line: int = field(default=1)
+    offset: int = field(default=1)
 
-    if start == index: return None, start
-    return Token(start, index, TokenType.ALPHA), index
+    def can_advance(self):
+        return self.index < len(self.text)
 
-def _tokenize_digits(index, text):
-    if index >= len(text): return None, index
+    def peek(self):
+        assert self.can_advance()
+        return self.text[self.index]
 
-    start = index
-    while index < len(text) and ord('0') <= ord(text[index]) <= ord('9'):
-        index += 1
+    def advance(self):
+        assert self.can_advance()
+        if self.text[self.index] == '\n':
+            self.line += 1
+            self.offset = 1
+        self.index += 1
 
-    if start == index: return None, start
-    return Token(start, index, TokenType.INTEGER), index
+    def __eq__(self, other):
+        return self.index == other.index
 
-def _tokenize_space(index, text):
-    if index >= len(text): return None, index
+def _tokenize_alphabet(cursor):
+    if not cursor.can_advance(): return None, cursor
 
-    match text[index]:
-        case ' ':
-            return Token(index, index + 1, TokenType.SPACE), index + 1
-        case '\n':
-            return Token(index, index + 1, TokenType.NEWLINE), index + 1
-        case '\t':
-            return Token(index, index + 1, TokenType.TAB), index + 1
-        case '-':
-            return Token(index, index + 1, TokenType.MINUS), index + 1
-        case '_':
-            return Token(index, index + 1, TokenType.UNDERSCORE), index + 1
-        case _:
-            return None, index
+    old_cursor = clone(cursor)
+    while cursor.can_advance() and ord('A') <= ord(cursor.peek()) <= ord('z'):
+        cursor.advance()
+
+    if old_cursor == cursor: return None, old_cursor
+    return Token(old_cursor.index, cursor.index, TokenType.ALPHA), cursor
+
+def _tokenize_digits(cursor):
+    if not cursor.can_advance(): return None, cursor
+
+    old_cursor = clone(cursor)
+    while cursor.can_advance() and ord('0') <= ord(cursor.peek()) <= ord('9'):
+        cursor.advance()
+
+    if old_cursor == cursor: return None, cursor
+    return Token(old_cursor.index, cursor.index, TokenType.INTEGER), cursor
+
+def _tokenize_special_char(cursor):
+    if not cursor.can_advance(): return None, cursor
+    token_type = SPECIAL_CHAR_TOKEN_TYPE_MAPPING.get(cursor.peek())
+    if token_type is None: return None, cursor
+
+    start = cursor.index
+    cursor.advance()
+    return Token(start, cursor.index, token_type), cursor
 
 
 def tokenize(text):
-    index = 0
+    cursor = Cursor(text)
     tokens = []
-    while index < len(text):
-        oindex = index
-        token, index = _tokenize_alphabet(index, text)
+    while cursor.can_advance():
+        old_cursor = clone(cursor)
+        token, cursor = _tokenize_alphabet(cursor)
         if token is not None: tokens.append(token)
-        token, index = _tokenize_digits(index, text)
+        token, cursor = _tokenize_digits(cursor)
         if token is not None: tokens.append(token)
-        token, index = _tokenize_space(index, text)
+        token, cursor = _tokenize_special_char(cursor)
         if token is not None: tokens.append(token)
 
         # if index has not moved that means we have
         # encountered an unknown character at index.
-        if index == oindex:
+        if old_cursor == cursor:
             raise Exception(f'Cannot tokenize input due to unsupported character with ascii code {ord(text[index])}')
     return tokens
