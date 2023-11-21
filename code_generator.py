@@ -33,7 +33,9 @@ def generate(calls):
         '_start:',
     ]
     scope = {'args': {}, 'stack': 0}
-    for c in calls:
+    index = 0
+    while index < len(calls):
+        c = calls[index]
         # ['assign', str variable name, int literal | str variable ref]
         if c[0] == 'assign':
             arg1, arg2 = c[1], c[2]
@@ -54,10 +56,10 @@ def generate(calls):
             assert len(c) == 3
             # find a way to handle divide by 0 error before generating the asm
             code.append(f"; -- call {c[0]} with params {' '.join(c[1:])} --")
-            code.append(f"mov rax, {deref(scope, c[1])}")
             code.append("xor rdx, rdx")
-            code.append(f"mov rbx, {deref(scope, c[2])}")
-            code.append(f"div rbx")
+            code.append(f"mov rax, {deref(scope, c[1])}")
+            code.append(f"mov rdi, {deref(scope, c[2])}")
+            code.append(f"div rdi")
             code.append("push rax")
             scope['args']['_'] = scope['stack']
             scope['stack'] += 1
@@ -65,10 +67,10 @@ def generate(calls):
             assert len(c) == 3
             # find a way to handle divide by 0 error before generating the asm
             code.append(f"; -- call {c[0]} with params {' '.join(c[1:])} --")
-            code.append(f"mov rax, {deref(scope, c[1])}")
             code.append("xor rdx, rdx")
-            code.append(f"mov rbx, {deref(scope, c[2])}")
-            code.append(f"div rbx")
+            code.append(f"mov rax, {deref(scope, c[1])}")
+            code.append(f"mov rdi, {deref(scope, c[2])}")
+            code.append(f"div rdi")
             code.append("push rdx")
             scope['args']['_'] = scope['stack']
             scope['stack'] += 1
@@ -76,8 +78,8 @@ def generate(calls):
             assert len(c) == 3
             code.append(f"; -- call {c[0]} with params {' '.join(c[1:])} --")
             code.append(f"mov rax, {deref(scope, c[1])}")
-            code.append(f"mov rbx, {deref(scope, c[2])}")
-            code.append(f"mul rbx")
+            code.append(f"mov rdi, {deref(scope, c[2])}")
+            code.append(f"mul rdi")
             code.append("push rax")
             scope['args']['_'] = scope['stack']
             scope['stack'] += 1
@@ -96,4 +98,5 @@ def generate(calls):
             if '_' in scope['args'] : del scope['args']['_']
         else:
             raise Exception(f'Unknow function call {" ".join(map(str, c))}')
+        index += 1
     return '\n'.join(code)
