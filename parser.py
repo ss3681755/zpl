@@ -1,10 +1,14 @@
-from tokenizer import TokenType, tokenize
+from tokenizer import Cursor, TokenType, tokenize
+
+def join_tokens(tokens, start, end):
+    return ''.join(map(lambda t: t.value, tokens[start:end])) or None
 
 def consume_token_of_type(index, tokens, token_type):
     start = index
     while index < len(tokens) and tokens[index].token_type == token_type:
         index += 1
-    value = ''.join(map(lambda t: t.value, tokens[start:index])) or None
+
+    value = join_tokens(tokens, start, index)
     return (start, None) if value is None else (index, value)
 
 def consume_spaces(index, tokens):
@@ -21,18 +25,13 @@ def consume_alphabets(index, tokens):
 
 def parse_signed_literal(index, tokens):
     if index == len(tokens): return index, None
-    match tokens[index].token_type:
-        case TokenType.MINUS:
-            start = index
-            # skip MINUS token
-            index += 1
-
-            index, literal = parse_unsigned_literal(index, tokens)
-            if literal is None:
-                return start, None
-            return index, -1 * literal
-        case _:
-            return index, None
+    if tokens[index].token_type != TokenType.MINUS: return index, None
+    start = index
+    # skip MINUS token
+    index += 1
+    index, literal = parse_unsigned_literal(index, tokens)
+    if literal is None: return start, None
+    return index, -1 * literal
 
 def parse_unsigned_literal(index, tokens):
     if index == len(tokens): return index, None
@@ -125,6 +124,7 @@ def parse_function_call(index, tokens):
 def parse(tokens):
     index = 0
     nodes = []
+    cursor = Cursor(tokens)
     while index < len(tokens):
         index, node = parse_function_call(index, tokens)
         if node is None:

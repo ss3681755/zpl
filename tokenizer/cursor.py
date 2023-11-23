@@ -1,5 +1,3 @@
-from contextlib import contextmanager
-
 class Cursor:
     def __init__(self, text):
         self.text = text
@@ -27,15 +25,13 @@ class Cursor:
             self.__offset = 1
         self.__index += 1
 
-    @contextmanager
-    def locked(self):
+    def try_advance(self, callback):
         if not self.can_advance(): return
-        try:
-            self.__lock()
-            yield
-            self.__commit()
-        except Exception as e:
-            self.__rollback()
+        self.__lock()
+        value = callback(self)
+        if value is None: self.__rollback()
+        else: self.__commit()
+        return value
 
     def __lock(self):
         assert not self.__locked, 'Cursor already locked.'
