@@ -1,132 +1,100 @@
 from tokenizer import Cursor, TokenType, tokenize
 
-def join_tokens(tokens, start, end):
-    return ''.join(map(lambda t: t.value, tokens[start:end])) or None
+def join_tokens(tokens):
+    return ''.join(map(lambda t: t.value, tokens)) or None
 
-def consume_token_of_type(index, tokens, token_type):
-    start = index
-    while index < len(tokens) and tokens[index].token_type == token_type:
-        index += 1
+def consume_token_of_type(cursor, token_type):
+    while cursor.can_advance() and cursor.peek().token_type == token_type:
+        cursor.advance()
 
-    value = join_tokens(tokens, start, index)
-    return (start, None) if value is None else (index, value)
+    if value := cursor.extract():
+        return join_tokens(value)
 
-def consume_spaces(index, tokens):
-    return consume_token_of_type(index, tokens, TokenType.SPACE)
+def consume_spaces(cursor):
+    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.SPACE))
 
-def consume_newlines(index, tokens):
-    return consume_token_of_type(index, tokens, TokenType.NEWLINE)
+def consume_newlines(cursor):
+    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.NEWLINE))
 
-def consume_underscores(index, tokens):
-    return consume_token_of_type(index, tokens, TokenType.UNDERSCORE)
+def consume_underscores(cursor):
+    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.UNDERSCORE))
 
-def consume_alphabets(index, tokens):
-    return consume_token_of_type(index, tokens, TokenType.ALPHA)
+def consume_alphabets(cursor):
+    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.ALPHA))
 
-def parse_signed_literal(index, tokens):
-    if index == len(tokens): return index, None
-    if tokens[index].token_type != TokenType.MINUS: return index, None
-    start = index
-    # skip MINUS token
-    index += 1
-    index, literal = parse_unsigned_literal(index, tokens)
-    if literal is None: return start, None
-    return index, -1 * literal
+def parse_unsigned_literal(cursor):
+    if cursor.peek().token_type == TokenType.INTEGER:
+        value = cursor.peek().value
+        cursor.advance()
+        return value
 
-def parse_unsigned_literal(index, tokens):
-    if index == len(tokens): return index, None
-    # only +/- integer literals are supported for now.
-    match tokens[index].token_type:
-        case TokenType.INTEGER:
-            return index + 1, int(tokens[index].value)
-        case _:
-            return index, None
+def parse_signed_literal(cursor):
+    if not cursor.can_advance(): return
+    if cursor.peek().token_type != TokenType.MINUS: return
+    sign = cursor.peek().value
+    cursor.advance() # move past sign
+    literal = cursor.try_advance(parse_unsigned_literal)
+    if literal is None: return
+    return sign + literal
 
-def parse_literal(index, tokens):
-    start = index
-    index, signed_literal = parse_signed_literal(index, tokens)
-    if signed_literal is not None:
-        return index, signed_literal
+def parse_literal(cursor):
+    signed_literal = parse_signed_literal(cursor)
+    if signed_literal is not None: return signed_literal
 
-    index, unsigned_literal = parse_unsigned_literal(index, tokens)
+    unsigned_literal = parse_unsigned_literal(cursor)
     if unsigned_literal is not None:
-        return index, unsigned_literal
-
-    return start, None
+        return unsigned_literal
 
 # an atom is valid placeholder with regex [_a-zA-Z]+
-def parse_atom(index, tokens):
+def parse_atom(cursor):
     name = []
-    start = index
-    while index < len(tokens):
+    while cursor.can_advance():
         prev_length = len(name)
-        index, underscores = consume_underscores(index, tokens)
+        underscores = consume_underscores(cursor)
         if underscores is not None: name.append(underscores)
 
-        index, alphabets = consume_alphabets(index, tokens)
+        alphabets = consume_alphabets(cursor)
         if alphabets is not None: name.append(alphabets)
         # we neither found underscores nor alphabets
         if prev_length == len(name): break
-    name = ''.join(name)
-    if len(name) == 0:
-        return start, None
-    return index, name
+    return ''.join(name) or None
 
-def parse_argument(index, tokens):
-    start = index
-    argument = {}
-    index, atom = parse_atom(index, tokens)
+def parse_argument(cursor):
+    atom = parse_atom(cursor)
     if atom is not None:
-        argument['value'] = atom
-        argument['type'] = 'atom'
-        return index, argument
+        return {'value': atom, 'type': 'atom'}
 
-    index, literal = parse_literal(index, tokens)
+    literal = parse_literal(cursor)
     if literal is not None:
-        argument['value'] = literal
-        argument['type'] = 'literal'
-        return index, argument
+        return {'value': literal, 'type': 'literal'}
 
-    return start, None
+def parse_function_call(cursor):
+    fname = parse_atom(cursor)
+    if fname is None: return
 
-
-def parse_function_call(index, tokens):
-    start = index
-    function = {}
-
-    index, fname = parse_atom(index, tokens)
-    if fname is None:
-        return start, None
-    function['name'] = fname
-
-    index, spaces = consume_spaces(index, tokens)
-    if spaces is None:
-        return start, None
+    spaces = consume_spaces(cursor)
+    if spaces is None: return
 
     arguments = []
-    while index < len(tokens):
-        index, arg = parse_argument(index, tokens)
-        if arg is not None: arguments.append(arg)
-        else: break
+    while cursor.can_advance():
+        arg = parse_argument(cursor)
+        if arg is None: break
 
-        index, _ = consume_spaces(index, tokens)
+        arguments.append(arg)
+        _ = consume_spaces(cursor)
 
-    if len(arguments) == 0:
-        return start, None
+    if len(arguments) == 0: return
 
-    function['arguments'] = arguments
-    index, newlines = consume_newlines(index, tokens)
-    if newlines is None:
-        return start, None
+    newlines = consume_newlines(cursor)
+    if newlines is None: return
 
-    return index, function
+    return {'name': fname, 'arguments': arguments}
 
 def parse(tokens):
-    index = 0
     nodes = []
     cursor = Cursor(tokens)
-    while index < len(tokens):
-        index, node = parse_function_call(index, tokens)
+    while cursor.can_advance():
+        node = parse_function_call(cursor)
         if node is None:
             return []
         nodes.append(node)
