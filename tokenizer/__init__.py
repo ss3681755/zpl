@@ -1,13 +1,5 @@
-from .token import Token, TokenType
+from .token import Token, TokenType, special_char_token_type
 from .cursor import Cursor
-
-_SPECIAL_CHAR_TOKEN_TYPE_MAPPING = {
-    ' ': TokenType.SPACE,
-    '\n': TokenType.NEWLINE,
-    '\t': TokenType.TAB,
-    '-': TokenType.MINUS,
-    '_': TokenType.UNDERSCORE
-}
 
 def _tokenize_alphabet(cursor):
     while cursor.can_advance() and (ord('A') <= ord(cursor.peek()) <= ord('Z') or ord('a') <= ord(cursor.peek()) <= ord('z')):
@@ -28,7 +20,7 @@ def _tokenize_special_char(cursor):
 
     value = cursor.extract()
     if value := cursor.extract():
-        token_type = _SPECIAL_CHAR_TOKEN_TYPE_MAPPING.get(value)
+        token_type = special_char_token_type(value)
         return Token(cursor, value, token_type)
 
 def tokenize(text):

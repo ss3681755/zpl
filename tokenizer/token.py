@@ -24,3 +24,14 @@ class Token:
         self.offset = cursor.offset
         self.value = value
         self.token_type = token_type
+
+_SPECIAL_CHAR_TOKEN_TYPE_MAPPING = {
+    ' ': TokenType.SPACE,
+    '\n': TokenType.NEWLINE,
+    '\t': TokenType.TAB,
+    '-': TokenType.MINUS,
+    '_': TokenType.UNDERSCORE
+}
+
+def special_char_token_type(value):
+    return _SPECIAL_CHAR_TOKEN_TYPE_MAPPING[value]
