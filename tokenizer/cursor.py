@@ -6,12 +6,6 @@ class Cursor:
         self.offset = 0
         self.__checkpoints = []
 
-    def extract(self):
-        assert len(self.__checkpoints) > 0, 'Extraction is allowed only when checkpointed.'
-        index = self.__checkpoints[-1][0]
-        if self.index == index: return None
-        return self.text[index:self.index]
-
     def can_advance(self):
         return self.index < len(self.text)
 
@@ -29,10 +23,12 @@ class Cursor:
     def try_advance(self, callback):
         if not self.can_advance(): return
         self.__checkpoint()
-        value = callback(self)
-        if value is None: self.__reset()
-        else: self.__commit()
-        return value
+        callback(self)
+        if value := self.__extract():
+            self.__commit()
+            return value
+
+        self.__reset()
 
     def __checkpoint(self):
         self.__checkpoints.append((self.index, self.line, self.offset))
@@ -42,3 +38,8 @@ class Cursor:
 
     def __commit(self):
         self.__checkpoints.pop()
+
+    def __extract(self):
+        index = self.__checkpoints[-1][0]
+        if self.index == index: return None
+        return self.text[index:self.index]

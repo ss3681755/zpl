@@ -7,43 +7,42 @@ def consume_token_of_type(cursor, token_type):
     while cursor.can_advance() and cursor.peek().token_type == token_type:
         cursor.advance()
 
-    if value := cursor.extract():
-        return join_tokens(value)
+def consumer(cursor, token_type):
+    value = cursor.try_advance(lambda c: consume_token_of_type(c, token_type))
+    if value: return join_tokens(value)
 
 def consume_spaces(cursor):
-    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.SPACE))
+    return consumer(cursor, TokenType.SPACE)
 
 def consume_newlines(cursor):
-    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.NEWLINE))
+    return consumer(cursor, TokenType.NEWLINE)
 
 def consume_underscores(cursor):
-    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.UNDERSCORE))
+    return consumer(cursor, TokenType.UNDERSCORE)
 
 def consume_alphabets(cursor):
-    return cursor.try_advance(lambda c: consume_token_of_type(c, TokenType.ALPHA))
+    return consumer(cursor, TokenType.ALPHA)
 
 def parse_unsigned_literal(cursor):
     if cursor.peek().token_type == TokenType.INTEGER:
-        value = cursor.peek().value
         cursor.advance()
-        return value
 
 def parse_signed_literal(cursor):
     if not cursor.can_advance(): return
     if cursor.peek().token_type != TokenType.MINUS: return
     sign = cursor.peek().value
     cursor.advance() # move past sign
-    literal = cursor.try_advance(parse_unsigned_literal)
-    if literal is None: return
-    return sign + literal
+    value = cursor.try_advance(parse_unsigned_literal)
+    if value is None: return
+    return sign + value[0].value
 
 def parse_literal(cursor):
     signed_literal = parse_signed_literal(cursor)
     if signed_literal is not None: return signed_literal
 
-    unsigned_literal = parse_unsigned_literal(cursor)
-    if unsigned_literal is not None:
-        return unsigned_literal
+    value = cursor.try_advance(parse_unsigned_literal)
+    if value is None: return
+    return value[0].value
 
 # an atom is valid placeholder with regex [_a-zA-Z]+
 def parse_atom(cursor):
