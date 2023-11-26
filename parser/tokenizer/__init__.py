@@ -1,16 +1,9 @@
 from cursor import Cursor
 from tokens import Token, TokenType, special_char_token_type
 
-def _tokenize_alphabet(cursor):
-    while cursor.can_move() and (ord('A') <= ord(cursor.peek()) <= ord('Z') or ord('a') <= ord(cursor.peek()) <= ord('z')):
-        cursor.move()
-
-def _tokenize_digits(cursor):
-    while cursor.can_move() and ord('0') <= ord(cursor.peek()) <= ord('9'):
-        cursor.move()
-
-def _tokenize_special_char(cursor):
-    cursor.move()
+from .alphabet import tokenize as _tokenize_alphabet
+from .digit import tokenize as _tokenize_digit
+from .special_char import tokenize as _tokenize_special_char
 
 def tokenize(text):
     cursor = Cursor(text)
@@ -20,7 +13,7 @@ def tokenize(text):
         if value := cursor.attempt(_tokenize_alphabet):
             token = Token(cursor, value, TokenType.ALPHA)
             tokens.append(token)
-        if value := cursor.attempt(_tokenize_digits):
+        if value := cursor.attempt(_tokenize_digit):
             token = Token(cursor, value, TokenType.INTEGER)
             tokens.append(token)
         if value := cursor.attempt(_tokenize_special_char):
