@@ -4,25 +4,25 @@ def _join_tokens(tokens):
     return ''.join(map(lambda t: t.value, tokens)) or None
 
 def _consume_token_of_type(cursor, token_type):
-    while cursor.can_advance() and cursor.peek().token_type == token_type:
-        cursor.advance()
+    while cursor.can_move() and cursor.peek().token_type == token_type:
+        cursor.move()
 
 def _consume(cursor, token_type):
-    value = cursor.try_advance(lambda c: _consume_token_of_type(c, token_type))
+    value = cursor.attempt(lambda c: _consume_token_of_type(c, token_type))
     if value: return _join_tokens(value)
 
 def _consume_one_token_of_type(cursor, token_type):
-    if cursor.can_advance() and cursor.peek().token_type == token_type:
-        cursor.advance()
+    if cursor.can_move() and cursor.peek().token_type == token_type:
+        cursor.move()
 
 def _consume_once(cursor, token_type):
-    value = cursor.try_advance(lambda c: _consume_one_token_of_type(c, token_type))
+    value = cursor.attempt(lambda c: _consume_one_token_of_type(c, token_type))
     if value and len(value) == 1: return _join_tokens(value)
 
 def _consume_empty_lines(cursor):
     spaces = _consume(cursor, TokenType.SPACE) or ''
     newlines = _consume(cursor, TokenType.NEWLINE) or ''
-    while cursor.can_advance() and (len(spaces) > 0 or len(newlines) > 0):
+    while cursor.can_move() and (len(spaces) > 0 or len(newlines) > 0):
         spaces = _consume(cursor, TokenType.SPACE) or ''
         newlines = _consume_once(cursor, TokenType.NEWLINE) or ''
 
@@ -33,23 +33,23 @@ def parse_unsigned_literal(cursor):
     return _consume_once(cursor, TokenType.INTEGER)
 
 def parse_signed_literal(cursor):
-    sign = cursor.try_advance(parse_sign)
+    sign = cursor.attempt(parse_sign)
     if sign is None: return
-    value = cursor.try_advance(parse_unsigned_literal)
+    value = cursor.attempt(parse_unsigned_literal)
     if value is None: return
     return sign + value
 
 def parse_literal(cursor):
-    signed_literal = cursor.try_advance(parse_signed_literal)
+    signed_literal = cursor.attempt(parse_signed_literal)
     if signed_literal is not None: return signed_literal
 
-    unsigned_literal = cursor.try_advance(parse_unsigned_literal)
+    unsigned_literal = cursor.attempt(parse_unsigned_literal)
     if unsigned_literal is not None: return unsigned_literal
 
 # an atom is valid placeholder with regex [_a-zA-Z]+
 def parse_atom(cursor):
     name = []
-    while cursor.can_advance():
+    while cursor.can_move():
         if underscores := _consume(cursor, TokenType.UNDERSCORE):
             name.append(underscores)
 
@@ -61,23 +61,23 @@ def parse_atom(cursor):
     return ''.join(name) or None
 
 def parse_argument(cursor):
-    if atom := cursor.try_advance(parse_atom):
+    if atom := cursor.attempt(parse_atom):
         return {'value': atom, 'type': 'atom'}
 
-    if literal := cursor.try_advance(parse_literal):
+    if literal := cursor.attempt(parse_literal):
         return {'value': literal, 'type': 'literal'}
 
 def parse_function_call(cursor):
-    fname = cursor.try_advance(parse_atom)
+    fname = cursor.attempt(parse_atom)
     if fname is None: return
 
     arguments = []
-    while cursor.can_advance():
+    while cursor.can_move():
         # ignore spaces if any but there must be at least 1 space
         # if not that means we have reached the end of function call.
         if _consume(cursor, TokenType.SPACE) is None: break
 
-        arg = cursor.try_advance(parse_argument)
+        arg = cursor.attempt(parse_argument)
         if arg is None: break
         arguments.append(arg)
 
@@ -89,8 +89,8 @@ def parse(tokens):
     nodes = []
     cursor = Cursor(tokens)
     _consume_empty_lines(cursor)
-    while cursor.can_advance():
-        if fn_call := cursor.try_advance(parse_function_call):
+    while cursor.can_move():
+        if fn_call := cursor.attempt(parse_function_call):
             nodes.append(fn_call)
         _consume_empty_lines(cursor)
     return nodes

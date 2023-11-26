@@ -6,22 +6,22 @@ class Cursor:
         self.offset = 0
         self.__checkpoints = []
 
-    def can_advance(self):
+    def can_move(self):
         return self.index < len(self.text)
 
     def peek(self):
-        assert self.can_advance()
+        assert self.can_move()
         return self.text[self.index]
 
-    def advance(self):
-        assert self.can_advance()
+    def move(self):
+        assert self.can_move()
         if self.text[self.index] == '\n':
             self.line += 1
             self.offset = 1
         self.index += 1
 
-    def try_advance(self, callback):
-        if not self.can_advance(): return
+    def attempt(self, callback):
+        if not self.can_move(): return
         self.__checkpoint()
         value = callback(self) or self.__extract()
         if value is None:
