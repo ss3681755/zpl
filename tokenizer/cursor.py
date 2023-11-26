@@ -1,52 +1,44 @@
 class Cursor:
     def __init__(self, text):
         self.text = text
-        self.index = self.__index = 0
-        self.line = self.__line = 0
-        self.offset = self.__offset = 0
-        self.__locked = False
+        self.index = 0
+        self.line = 0
+        self.offset = 0
+        self.__checkpoints = []
 
     def extract(self):
-        assert self.__locked , 'Extract is allowed only when cursor is locked.'
-        if self.index == self.__index: return None
-        return self.text[self.index:self.__index]
+        assert len(self.__checkpoints) > 0, 'Extraction is allowed only when checkpointed.'
+        index = self.__checkpoints[-1][0]
+        if self.index == index: return None
+        return self.text[index:self.index]
 
     def can_advance(self):
-        return self.__index < len(self.text)
+        return self.index < len(self.text)
 
     def peek(self):
         assert self.can_advance()
-        return self.text[self.__index]
+        return self.text[self.index]
 
     def advance(self):
         assert self.can_advance()
-        if self.text[self.__index] == '\n':
-            self.__line += 1
-            self.__offset = 1
-        self.__index += 1
+        if self.text[self.index] == '\n':
+            self.line += 1
+            self.offset = 1
+        self.index += 1
 
     def try_advance(self, callback):
         if not self.can_advance(): return
-        self.__lock()
+        self.__checkpoint()
         value = callback(self)
-        if value is None: self.__rollback()
+        if value is None: self.__reset()
         else: self.__commit()
         return value
 
-    def __lock(self):
-        assert not self.__locked, 'Cursor already locked.'
-        self.__locked = True
+    def __checkpoint(self):
+        self.__checkpoints.append((self.index, self.line, self.offset))
 
-    def __rollback(self):
-        assert self.__locked, 'Rollback is allowed only when cursor is locked.'
-        self.__index = self.index
-        self.__line = self.line
-        self.__offset = self.offset
-        self.__locked = False
+    def __reset(self):
+        self.index, self.line, self.offset = self.__checkpoints.pop()
 
     def __commit(self):
-        assert self.__locked, 'Commit is allowed only when cursor is locked.'
-        self.index = self.__index
-        self.line = self.__line
-        self.offset = self.__offset
-        self.__locked = False
+        self.__checkpoints.pop()

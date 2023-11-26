@@ -18,7 +18,6 @@ def _tokenize_digits(cursor):
 def _tokenize_special_char(cursor):
     cursor.advance()
 
-    value = cursor.extract()
     if value := cursor.extract():
         token_type = special_char_token_type(value)
         return Token(cursor, value, token_type)
