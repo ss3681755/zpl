@@ -1,4 +1,6 @@
-from tokenizer import Cursor, TokenType, tokenize
+from tokenizer import tokenize
+from cursor import Cursor
+from tokens import TokenType
 
 def _join_tokens(tokens):
     return ''.join(map(lambda t: t.value, tokens)) or None
