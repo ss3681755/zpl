@@ -1,58 +1,51 @@
 from tokenizer import Cursor, TokenType, tokenize
 
-def join_tokens(tokens):
+def _join_tokens(tokens):
     return ''.join(map(lambda t: t.value, tokens)) or None
 
-def consume_token_of_type(cursor, token_type):
+def _consume_token_of_type(cursor, token_type):
     while cursor.can_advance() and cursor.peek().token_type == token_type:
         cursor.advance()
 
-def consumer(cursor, token_type):
-    value = cursor.try_advance(lambda c: consume_token_of_type(c, token_type))
-    if value: return join_tokens(value)
+def _consume(cursor, token_type):
+    value = cursor.try_advance(lambda c: _consume_token_of_type(c, token_type))
+    if value: return _join_tokens(value)
 
-def consume_spaces(cursor):
-    return consumer(cursor, TokenType.SPACE)
-
-def consume_newlines(cursor):
-    return consumer(cursor, TokenType.NEWLINE)
-
-def consume_underscores(cursor):
-    return consumer(cursor, TokenType.UNDERSCORE)
-
-def consume_alphabets(cursor):
-    return consumer(cursor, TokenType.ALPHA)
-
-def parse_unsigned_literal(cursor):
-    if cursor.peek().token_type == TokenType.INTEGER:
+def _consume_one_token_of_type(cursor, token_type):
+    if cursor.can_advance() and cursor.peek().token_type == token_type:
         cursor.advance()
 
+def _consume_once(cursor, token_type):
+    value = cursor.try_advance(lambda c: _consume_one_token_of_type(c, token_type))
+    if value and len(value) == 1: return _join_tokens(value)
+
+def parse_sign(cursor):
+    return _consume_once(cursor, TokenType.MINUS)
+
+def parse_unsigned_literal(cursor):
+    return _consume_once(cursor, TokenType.INTEGER)
+
 def parse_signed_literal(cursor):
-    if not cursor.can_advance(): return
-    if cursor.peek().token_type != TokenType.MINUS: return
-    sign = cursor.peek().value
-    cursor.advance() # move past sign
-    value = cursor.try_advance(parse_unsigned_literal)
-    if value is None: return
-    return sign + value[0].value
+    sign = parse_sign(cursor)
+    if value := parse_unsigned_literal(cursor):
+        return (sign or '') + value
 
 def parse_literal(cursor):
-    signed_literal = parse_signed_literal(cursor)
-    if signed_literal is not None: return signed_literal
+    if signed_literal := parse_signed_literal(cursor):
+        return signed_literal
 
-    value = cursor.try_advance(parse_unsigned_literal)
-    if value is None: return
-    return value[0].value
+    if unsigned_literal := parse_unsigned_literal(cursor):
+        return unsigned_literal
 
 # an atom is valid placeholder with regex [_a-zA-Z]+
 def parse_atom(cursor):
     name = []
     while cursor.can_advance():
         prev_length = len(name)
-        underscores = consume_underscores(cursor)
+        underscores = _consume(cursor, TokenType.UNDERSCORE)
         if underscores is not None: name.append(underscores)
 
-        alphabets = consume_alphabets(cursor)
+        alphabets = _consume_once(cursor, TokenType.ALPHA)
         if alphabets is not None: name.append(alphabets)
         # we neither found underscores nor alphabets
         if prev_length == len(name): break
@@ -71,7 +64,7 @@ def parse_function_call(cursor):
     fname = parse_atom(cursor)
     if fname is None: return
 
-    spaces = consume_spaces(cursor)
+    spaces = _consume(cursor, TokenType.SPACE)
     if spaces is None: return
 
     arguments = []
@@ -80,11 +73,11 @@ def parse_function_call(cursor):
         if arg is None: break
 
         arguments.append(arg)
-        _ = consume_spaces(cursor)
+        _ = _consume(cursor, TokenType.SPACE)
 
     if len(arguments) == 0: return
 
-    newlines = consume_newlines(cursor)
+    newlines = _consume(cursor, TokenType.NEWLINE)
     if newlines is None: return
 
     return {'name': fname, 'arguments': arguments}
