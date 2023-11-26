@@ -19,7 +19,7 @@ test: tester.py
 	python tester.py project-euler
 
 clean:
-	rm -rf *out* *.o
+	rm -rf *out* *.o **/*pycache*
 
 setup:
 	sudo apt update
