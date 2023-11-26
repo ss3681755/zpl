@@ -100,17 +100,3 @@ def parse(tokens):
             nodes.append(fn_call)
         _parse_empty_lines(cursor)
     return nodes
-
-with open('sample.zpl') as f:
-    source = f.read()
-
-def print_tokens(index):
-    for t in tokens[:index]:
-        print(t)
-
-tokens = tokenize(source)
-calls = parse(tokens)
-for c in calls:
-    args = ' '.join(map(lambda x: str(x['value']), c['arguments']))
-    # print(args)
-    print(c['name'], args)
