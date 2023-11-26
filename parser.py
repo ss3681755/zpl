@@ -67,10 +67,7 @@ def parse_argument(cursor):
     if literal := cursor.attempt(parse_literal):
         return {'value': literal, 'type': 'literal'}
 
-def parse_function_call(cursor):
-    fname = cursor.attempt(parse_atom)
-    if fname is None: return
-
+def parse_argument_list(cursor):
     arguments = []
     while cursor.can_move():
         # ignore spaces if any but there must be at least 1 space
@@ -81,7 +78,14 @@ def parse_function_call(cursor):
         if arg is None: break
         arguments.append(arg)
 
-    if len(arguments) == 0: return
+    if len(arguments) > 0: return arguments
+
+def parse_function_call(cursor):
+    fname = cursor.attempt(parse_atom)
+    if fname is None: return
+
+    arguments = cursor.attempt(parse_argument_list)
+    if arguments is None: return
 
     return {'name': fname, 'arguments': arguments}
 
