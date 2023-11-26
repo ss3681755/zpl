@@ -23,12 +23,12 @@ class Cursor:
     def try_advance(self, callback):
         if not self.can_advance(): return
         self.__checkpoint()
-        callback(self)
-        if value := self.__extract():
-            self.__commit()
-            return value
-
-        self.__reset()
+        value = callback(self) or self.__extract()
+        if value is None:
+            self.__reset()
+            return
+        self.__commit()
+        return value
 
     def __checkpoint(self):
         self.__checkpoints.append((self.index, self.line, self.offset))
