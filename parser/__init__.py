@@ -3,34 +3,34 @@ from tokenizer import Cursor, TokenType, tokenize
 def _join_tokens(tokens):
     return ''.join(map(lambda t: t.value, tokens)) or None
 
-def _consume_token_of_type(cursor, token_type):
+def _parse_token_of_type(cursor, token_type):
     while cursor.can_move() and cursor.peek().token_type == token_type:
         cursor.move()
 
-def _consume(cursor, token_type):
-    value = cursor.attempt(lambda c: _consume_token_of_type(c, token_type))
+def _parse(cursor, token_type):
+    value = cursor.attempt(lambda c: _parse_token_of_type(c, token_type))
     if value: return _join_tokens(value)
 
-def _consume_one_token_of_type(cursor, token_type):
+def _parse_one_token_of_type(cursor, token_type):
     if cursor.can_move() and cursor.peek().token_type == token_type:
         cursor.move()
 
-def _consume_once(cursor, token_type):
-    value = cursor.attempt(lambda c: _consume_one_token_of_type(c, token_type))
+def _parse_once(cursor, token_type):
+    value = cursor.attempt(lambda c: _parse_one_token_of_type(c, token_type))
     if value and len(value) == 1: return _join_tokens(value)
 
-def _consume_empty_lines(cursor):
-    spaces = _consume(cursor, TokenType.SPACE) or ''
-    newlines = _consume(cursor, TokenType.NEWLINE) or ''
+def _parse_empty_lines(cursor):
+    spaces = _parse(cursor, TokenType.SPACE) or ''
+    newlines = _parse(cursor, TokenType.NEWLINE) or ''
     while cursor.can_move() and (len(spaces) > 0 or len(newlines) > 0):
-        spaces = _consume(cursor, TokenType.SPACE) or ''
-        newlines = _consume_once(cursor, TokenType.NEWLINE) or ''
+        spaces = _parse(cursor, TokenType.SPACE) or ''
+        newlines = _parse_once(cursor, TokenType.NEWLINE) or ''
 
 def parse_sign(cursor):
-    return _consume_once(cursor, TokenType.MINUS)
+    return _parse_once(cursor, TokenType.MINUS)
 
 def parse_unsigned_literal(cursor):
-    return _consume_once(cursor, TokenType.INTEGER)
+    return _parse_once(cursor, TokenType.INTEGER)
 
 def parse_signed_literal(cursor):
     sign = cursor.attempt(parse_sign)
@@ -50,10 +50,10 @@ def parse_literal(cursor):
 def parse_atom(cursor):
     name = []
     while cursor.can_move():
-        if underscores := _consume(cursor, TokenType.UNDERSCORE):
+        if underscores := _parse(cursor, TokenType.UNDERSCORE):
             name.append(underscores)
 
-        if alphabets := _consume_once(cursor, TokenType.ALPHA):
+        if alphabets := _parse_once(cursor, TokenType.ALPHA):
             name.append(alphabets)
 
         if underscores is None and alphabets is None:
@@ -72,7 +72,7 @@ def parse_argument_list(cursor):
     while cursor.can_move():
         # ignore spaces if any but there must be at least 1 space
         # if not that means we have reached the end of function call.
-        if _consume(cursor, TokenType.SPACE) is None: break
+        if _parse(cursor, TokenType.SPACE) is None: break
 
         arg = cursor.attempt(parse_argument)
         if arg is None: break
@@ -92,11 +92,11 @@ def parse_function_call(cursor):
 def parse(tokens):
     nodes = []
     cursor = Cursor(tokens)
-    _consume_empty_lines(cursor)
+    _parse_empty_lines(cursor)
     while cursor.can_move():
         if fn_call := cursor.attempt(parse_function_call):
             nodes.append(fn_call)
-        _consume_empty_lines(cursor)
+        _parse_empty_lines(cursor)
     return nodes
 
 with open('sample.zpl') as f:
