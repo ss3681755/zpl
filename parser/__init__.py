@@ -29,10 +29,10 @@ def _parse_empty_lines(cursor):
         newlines = _parse_once(cursor, TokenType.NEWLINE) or ''
 
 def _parse_single_line_comment(cursor):
-    _hash = _parse_once(cursor, TokenType.HASH) or ''
+    _hash = _parse_once(cursor, TokenType.HASH)
     if _hash is None: return
     while cursor.can_move() and cursor.peek().token_type != TokenType.NEWLINE:
-        cursor.advance()
+        cursor.move()
 
 def parse_sign(cursor):
     return _parse_once(cursor, TokenType.MINUS)
