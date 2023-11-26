@@ -3,6 +3,7 @@ from enum import Flag, auto
 class TokenType(Flag):
     ALPHA = auto()
     INTEGER = auto()
+    HASH = auto()
     MINUS = auto()
     NEWLINE = auto()
     SPACE = auto()

@@ -28,6 +28,12 @@ def _parse_empty_lines(cursor):
         spaces = _parse(cursor, TokenType.SPACE) or ''
         newlines = _parse_once(cursor, TokenType.NEWLINE) or ''
 
+def _parse_single_line_comment(cursor):
+    _hash = _parse_once(cursor, TokenType.HASH) or ''
+    if _hash is None: return
+    while cursor.can_move() and cursor.peek().token_type != TokenType.NEWLINE:
+        cursor.advance()
+
 def parse_sign(cursor):
     return _parse_once(cursor, TokenType.MINUS)
 
@@ -99,4 +105,5 @@ def parse(tokens):
         if fn_call := cursor.attempt(parse_function_call):
             nodes.append(fn_call)
         _parse_empty_lines(cursor)
+        _parse_single_line_comment(cursor)
     return nodes

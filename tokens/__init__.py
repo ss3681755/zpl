@@ -1,6 +1,7 @@
 from .token import Token, TokenType
 
 _SPECIAL_CHAR_TOKEN_TYPE_MAPPING = {
+    '#': TokenType.HASH,
     ' ': TokenType.SPACE,
     '\n': TokenType.NEWLINE,
     '\t': TokenType.TAB,
