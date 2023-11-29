@@ -23,7 +23,9 @@ class Cursor:
     def attempt(self, callback):
         if not self.can_move(): return
         self.__checkpoint()
-        value = callback(self) or self.__extract()
+        value = callback(self)
+        if value is None:
+            value = self.__extract()
         if value is None:
             self.__reset()
             return
