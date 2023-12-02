@@ -5,6 +5,9 @@
 4. [NASM Instructions](https://www.perplexity.ai/search/319657e2-1956-4f7e-b77f-2c68e2c2df73?s=u)
 5. [Python match clause](https://blog.teclado.com/python-match-case/)
 
+# Future Plans
+1. [Compiler Safety](https://trojansource.codes/trojan-source.pdf)
+
 # Build
 1. Download nasm.
 ```sh
