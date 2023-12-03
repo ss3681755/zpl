@@ -6,11 +6,6 @@ ARITY_1_FUNCTIONS = ['inc', 'dec']
 
 VALUE_ACC = Argument('_', ArgumentType.ATOM)
 
-def isint(x):
-    try: int(x)
-    except: return False
-    return True
-
 def deref(scope, arg):
     return arg if arg.kind == ArgumentType.LITERAL else f"QWORD [rsp+{8*(scope['stack'] - scope['args'][arg] - 1)}]"
 
