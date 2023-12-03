@@ -1,26 +1,8 @@
-from dataclasses import dataclass, field
-
-from parser.argument import Argument, ArgumentType
+from .scope import Scope
 
 X86_64_REGISTERS = ['rax', 'rdi', 'rsi', 'rdx', 'r10', 'r8', 'r9']
 ARITY_2_FUNCTIONS = ['add', 'sub', 'and', 'or', 'xor']
 ARITY_1_FUNCTIONS = ['inc', 'dec']
-
-VALUE_ACC = Argument('_', ArgumentType.ATOM)
-
-@dataclass
-class Scope:
-    args: dict[Argument, int] = field(default_factory=dict)
-    stack: int = field(default=0)
-
-    def __getitem__(self, arg):
-        match arg.kind:
-            case ArgumentType.LITERAL:
-                return arg
-            case ArgumentType.ATOM:
-                return f"QWORD [rsp+{8*(self.stack - self.args[arg] - 1)}]"
-            case _:
-                raise Exception(f'Unknown argument type {arg}')
 
 def make_name_call(scope, fn, args):
     assert len(args) <= len(X86_64_REGISTERS), f"name only support params upto {len(X86_64_REGISTERS)}."
@@ -31,8 +13,7 @@ def make_name_call(scope, fn, args):
 
     code.append(f"{fn} {', '.join(X86_64_REGISTERS[:len(args)])}")
     code.append("push rax")
-    scope.args[VALUE_ACC] = scope.stack
-    scope.stack += 1
+    scope.increment()
     return code
 
 def generate(calls):
@@ -54,8 +35,8 @@ def generate(calls):
             code.append(f"; -- {arg1} = {arg2} --")
             code.append(f"push {scope[arg2]}")
 
-            scope.args[VALUE_ACC] = scope.args[arg1] = scope.stack
-            scope.stack += 1
+            scope[arg1] = scope.stack
+            scope.increment()
         # [<fn>, <int | variable>, <int | variable>]
         elif c.name in ARITY_2_FUNCTIONS:
             assert c.argcount() == 2
@@ -73,8 +54,7 @@ def generate(calls):
             code.append(f"mov rdi, {scope[arg2]}")
             code.append(f"div rdi")
             code.append("push rax")
-            scope.args[VALUE_ACC] = scope.stack
-            scope.stack += 1
+            scope.increment()
         elif c.name == 'rem':
             arg1, arg2 = c.args
             # find a way to handle divide by 0 error before generating the asm
@@ -84,8 +64,7 @@ def generate(calls):
             code.append(f"mov rdi, {scope[arg2]}")
             code.append(f"div rdi")
             code.append("push rdx")
-            scope.args[VALUE_ACC] = scope.stack
-            scope.stack += 1
+            scope.increment()
         elif c.name == 'mul':
             arg1, arg2 = c.args
             code.append(f"; -- call {c.name} with params {' '.join(map(str, c.args))} --")
@@ -93,8 +72,7 @@ def generate(calls):
             code.append(f"mov rdi, {scope[arg2]}")
             code.append(f"mul rdi")
             code.append("push rax")
-            scope.args[VALUE_ACC] = scope.stack
-            scope.stack += 1
+            scope.increment()
         # ['print', int literal | str variable ref]
         elif c.name == 'print':
             assert c.argcount() == 1
@@ -103,8 +81,7 @@ def generate(calls):
             code.append(f"mov rdi, {scope[arg1]}")
             code.append(f"call _print")
             # system calls do not have any output
-            # print(scope.args)
-            if VALUE_ACC in scope.args : del scope.args[VALUE_ACC]
+            scope.clear()
         elif c.name == 'exit':
             assert c.argcount() == 1
             arg1 = c.args[0]
@@ -112,7 +89,7 @@ def generate(calls):
             code.append(f"mov rdi, {scope[arg1]}")
             code.append(f"call _exit")
             # system calls do not have any output
-            if VALUE_ACC in scope.args : del scope.args[VALUE_ACC]
+            scope.clear()
         else:
             raise Exception(f'Unknow name call {" ".join(map(str, c))}')
         index += 1
