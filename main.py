@@ -1,14 +1,8 @@
 import sys
 
-from tokenizer import tokenize
-from parser import parse
-from codegen import generate
+from zpl import assemble
 
 if __name__ == '__main__':
     program = sys.argv[1] if len(sys.argv) > 1 else 'sample.zpl'
     with open(program) as f: source = f.read()
-
-    tokens = tokenize(source)
-    ast = parse(tokens)
-    asm = generate(ast)
-    with open('out.asm', 'w+') as f: f.write(asm)
+    with open('out.asm', 'w+') as f: f.write(assemble(source))

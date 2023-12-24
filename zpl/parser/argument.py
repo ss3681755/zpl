@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Flag, auto
-from tokens import TokenType
-from terminals import parse_atom, parse_literal
+from zpl.tokens import TokenType
+from zpl.terminals import parse_atom, parse_literal
 
 class ArgumentType(Flag):
     ATOM = auto()

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Flag, auto
 
-from cursor import Location
+from zpl.cursor import Location
 
 class TokenType(Flag):
     ALPHA = auto()

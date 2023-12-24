@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from parser.argument import Argument, ArgumentType
+from zpl.parser.argument import Argument, ArgumentType
 
 # Stores the result of the last instruction
 _PREV_RESULT = Argument('_', ArgumentType.ATOM)

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from terminals import parse_atom
+from zpl.terminals import parse_atom
 from .argument import Argument, parse_argument_list
 
 @dataclass

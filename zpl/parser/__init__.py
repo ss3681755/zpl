@@ -1,6 +1,6 @@
-from cursor import Cursor
+from zpl.cursor import Cursor
 
-from terminals import parse_empty_lines, parse_single_line_comment
+from zpl.terminals import parse_empty_lines, parse_single_line_comment
 from .function_call import parse_function_call
 
 def parse(tokens):

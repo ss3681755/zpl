@@ -1,5 +1,5 @@
-from cursor import Cursor
-from tokens import Token, TokenType, special_char_token_type
+from zpl.cursor import Cursor
+from zpl.tokens import Token, TokenType, special_char_token_type
 
 def _tokenize_alphabet(cursor):
     while cursor.can_move() and (ord('A') <= ord(cursor.peek()) <= ord('Z') or ord('a') <= ord(cursor.peek()) <= ord('z')):

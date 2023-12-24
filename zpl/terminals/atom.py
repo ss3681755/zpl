@@ -1,4 +1,4 @@
-from tokens import TokenType
+from zpl.tokens import TokenType
 
 def _parse_underscores(cursor):
     while cursor.can_move() and cursor.peek().token_type == TokenType.UNDERSCORE:
