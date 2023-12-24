@@ -11,14 +11,14 @@ def tokenize(text):
     while cursor.can_move():
         old_token_count = len(tokens)
         if value := cursor.attempt(_tokenize_alphabet):
-            token = Token(cursor, value, TokenType.ALPHA)
+            token = Token(value, cursor.location, TokenType.ALPHA)
             tokens.append(token)
         if value := cursor.attempt(_tokenize_digit):
-            token = Token(cursor, value, TokenType.INTEGER)
+            token = Token(value, cursor.location, TokenType.INTEGER)
             tokens.append(token)
         if value := cursor.attempt(_tokenize_special_char):
             token_type = special_char_token_type(value)
-            token = Token(cursor, value, token_type)
+            token = Token(value, cursor.location, token_type)
             tokens.append(token)
 
         # if no tokens were extracted that mean we

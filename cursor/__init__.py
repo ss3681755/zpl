@@ -1,3 +1,11 @@
+from dataclasses import dataclass
+
+@dataclass
+class Location:
+    start: int
+    line: int
+    offset: int
+
 class Cursor:
     def __init__(self, text):
         self.text = text
@@ -5,6 +13,10 @@ class Cursor:
         self.line = 0
         self.offset = 0
         self.__checkpoints = []
+
+    @property
+    def location(self):
+        return Location(self.index, self.line, self.offset)
 
     def can_move(self):
         return self.index < len(self.text)
