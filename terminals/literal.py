@@ -22,8 +22,7 @@ def _parse_signed_literal(cursor):
     return sign + literal
 
 def parse_literal(cursor):
-    signed_literal = cursor.attempt(_parse_signed_literal)
-    if signed_literal is not None: return signed_literal
-
-    unsigned_literal = cursor.attempt(_parse_unsigned_literal)
-    if unsigned_literal is not None: return unsigned_literal
+    if signed_literal := cursor.attempt(_parse_signed_literal):
+        return signed_literal
+    elif unsigned_literal := cursor.attempt(_parse_unsigned_literal):
+        return unsigned_literal

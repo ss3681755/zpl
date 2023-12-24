@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
+from terminals import parse_atom
 from .argument import Argument, parse_argument_list
-from .terminals import parse_atom
 
 @dataclass
 class FunctionCall:

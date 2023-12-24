@@ -10,6 +10,6 @@ def _parse_newlines(cursor):
 
 def parse_empty_lines(cursor):
     while cursor.can_move():
-        spaces = cursor.attempt(_parse_spaces)
-        newlines = cursor.attempt(_parse_newlines)
-        if spaces is None and newlines is None: break
+        if spaces := cursor.attempt(_parse_spaces): pass
+        elif newlines := cursor.attempt(_parse_newlines): pass
+        else: break
