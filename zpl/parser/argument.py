@@ -35,12 +35,10 @@ def _parse_argument(cursor):
 def parse_argument_list(cursor):
     arguments = []
     while cursor.can_move():
-        # ignore spaces if any but there must be at least 1 space
-        # if not that means we have reached the end of function call.
-        if spaces := cursor.attempt(_parse_spaces):
-            pass
-        elif arg := cursor.attempt(_parse_argument):
+        if arg := cursor.attempt(_parse_argument):
             arguments.append(arg)
+        elif _ := cursor.attempt(_parse_spaces):
+            pass
         else:
             break
 

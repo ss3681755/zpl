@@ -7,8 +7,12 @@ def parse(tokens):
     nodes = []
     cursor = Cursor(tokens)
     while cursor.can_move():
-        cursor.attempt(parse_empty_lines)
-        cursor.attempt(parse_single_line_comment)
         if fn_call := cursor.attempt(parse_function_call):
             nodes.append(fn_call)
+        elif _ := cursor.attempt(parse_empty_lines):
+            pass
+        elif _ := cursor.attempt(parse_single_line_comment):
+            pass
+        else:
+            break
     return nodes
