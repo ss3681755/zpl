@@ -8,8 +8,14 @@ class FunctionCall:
     name: str
     args: list[Argument]
 
+    @property
     def argcount(self):
         return len(self.args)
+
+    @property
+    def description(self):
+        str_args = ' '.join(map(str, self.args))
+        return f"; -- call {self.name} with params {str_args} --"
 
 def parse_function_call(cursor):
     fname = cursor.attempt(parse_atom)
